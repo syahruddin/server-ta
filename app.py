@@ -1,4 +1,6 @@
 from flask import Flask
+from calendar import monthrange
+import datetime
 import json
 import mysql.connector  as mysql
 
@@ -19,13 +21,47 @@ def hello_world():
 
 @app.route('/test')
 def test():
-    cursor.execute("select * from access where status_code = 400;")
-    #print(cursor.fetchall)
-    temp = ""
-    
-    for row in cursor:
-        x = 
-    return temp
+    #testing dapatkan data penggunaan selama bulan mei 2022, variabel ip address dan total objek tiap harinya 
+    #dapatkan jumlah hari di bulan mei 2022
+    total_hari = monthrange(2022, 5)[1]
+    #iterasi tiap hari di bulan mei
+    i = 1
+    while i <= total_hari:
+        #ambil data hari tsb dari database
+        today = datetime.datetime(2022,5,i)
+        nextday = today + datetime.timedelta(days=1)
+        today_str = today.strftime("%Y-%m-%d %H:%M:%S")
+        nextday_str = nextday.strftime("%Y-%m-%d %H:%M:%S")
+        query = "select ip_address, sum(total) as total from ((select distinct ip_address, 0 as total from (select ip_address, time, object_size from access where time between '2022-05-1' and '2022-05-31') may) UNION (select ip_address, sum(object_size) as total from (select ip_address, time, object_size from access where time between '2022-05-1' and '2022-05-31') may where time between '"+ today_str + "' and '"+ nextday_str + "' group by ip_address)) tabel group by ip_address order by ip_address;"
+        cursor.execute(query)
+        result = cursor.fetchall()
+        temp_data_harian = []
+        #masukan ke dalam python dictionary
+        if i == 1:
+            #inisiasi dictionary
+            total_baris = 0
+            data = {
+                "bulan":"5",
+                "tahun":"2022",
+                "jumlah_hari":total_hari,
+                "total_baris":total_baris,
+                "ip_address":[],
+                "total_object":[]
+            }
+            ip = []
+        for user in result:
+            temp_data_harian.append(user[1])
+            if i == 1:
+                total_baris = total_baris + 1
+                ip.append(user[0])
+        data["total_object"].append(temp_data_harian)
+        if i == 1:
+            data["ip_address"] = ip
+            data["total_baris"] = total_baris
+        i = i+1
+    #ubah python object menjadi json
+    data_json = json.dumps(data, default=str)
+    return data_json
 
 
 if __name__ == "__main__":
