@@ -26,16 +26,20 @@ def get_object_perday():
     else:
         args = request.args
 
-        total_hari = monthrange(args['year'], args['month'])[1]
+        total_hari = monthrange(int(args['year']), int(args['month']))[1]
+        start = datetime.datetime(int(args['year']),int(args['month']),1)
+        end = datetime.datetime(int(args['year']),int(args['month']),total_hari)
+        start_str = start.strftime("%Y-%m-%d %H:%M:%S")
+        end_str = end.strftime("%Y-%m-%d %H:%M:%S")
         #iterasi tiap hari
         i = 1
         while i <= total_hari:
             #ambil data hari tsb dari database
-            today = datetime.datetime(args['year'],args['month'],i)
+            today = datetime.datetime(int(args['year']),int(args['month']),i)
             nextday = today + datetime.timedelta(days=1)
             today_str = today.strftime("%Y-%m-%d %H:%M:%S")
             nextday_str = nextday.strftime("%Y-%m-%d %H:%M:%S")
-            query = "select ip_address, sum(total) as total from ((select distinct ip_address, 0 as total from (select ip_address, time, object_size from access where time between '2022-05-1' and '2022-05-31') may) UNION (select ip_address, sum(object_size) as total from (select ip_address, time, object_size from access where time between '2022-05-1' and '2022-05-31') may where time between '"+ today_str + "' and '"+ nextday_str + "' group by ip_address)) tabel group by ip_address order by ip_address;"
+            query = "select ip_address, sum(total) as total from ((select distinct ip_address, 0 as total from (select ip_address, time, object_size from access where time between '"+ start_str +"' and '" + end_str + "') may) UNION (select ip_address, sum(object_size) as total from (select ip_address, time, object_size from access where time between '"+ start_str +"' and '" + end_str + "') may where time between '"+ today_str + "' and '"+ nextday_str + "' group by ip_address)) tabel group by ip_address order by ip_address;"
             cursor.execute(query)
             result = cursor.fetchall()
             temp_data_harian = []
