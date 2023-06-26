@@ -51,26 +51,33 @@ def get_request_line_and_status_code():
     return 0
 @app.route('/seach_usage_of_keyword')
 def seach_usage_of_keyword():
-    #masukan 
+    #masukan sebuah keyword, keluaran setiap ip address yg pernah request berisi keyword tsb dan jumlah requestnya
+    if not checkArgs(['keyword']):
+       return "error",422
+    args = request.args
+    query = "SELECT ip_address, COUNT(request_line) as total_request FROM access WHERE request_line LIKE '%" + args['keyword'] + "%' GROUP BY ip_address;"
     return 0
 @app.route('/check_status_code_occurence')
 def check_status_code_occurence():
-    #
+    #masukan keyword status code, keluaran jumlah kemunculan tiap harinya
+    if not checkArgs(['keyword']):
+       return "error",422
+    args = request.args
+    query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE status_code = '" + args["keyword"] +"' GROUP BY CAST(time as DATE);"
     return 0
 @app.route('/check_status_code_occurence_per_ip')
 def check_status_code_occurence_per_ip():
-    #
+    #masukan keyword, hari bulan dan tahun. jika tanggal valid, keluaran tiap ip address dengan status code tersebut dan jumlah kemunculannya
+    #masukan keyword status code, keluaran jumlah kemunculan tiap harinya
+    if not checkArgs(['keyword','day','month','year']):
+       return "error",422
+    args = request.args
+    day = datetime.datetime(int(args['year']),int(args['month']),int(args['day']))
+    nextday = day + datetime.timedelta(days=1)
+    day_str = day.strftime("%Y-%m-%d")
+    nextday_str = nextday.strftime("%Y-%m-%d")
+    query = "SELECT ip_address, COUNT(status_code) AS total_status_code FROM access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND status_code ='" + args['keyword'] + "' GROUP BY ip_address;"
     return 0
-
-
-
-
-
-
-
-
-
-
 @app.route('/getobjectpermonth', methods=['GET'])
 def get_object_permonth():
     if not checkArgs(['year']):
