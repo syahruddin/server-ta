@@ -27,7 +27,28 @@ def check_daily_request():
     query = "SELECT CAST(time as DATE) as time, COUNT(request_line) as total_request, SUM(object_size) as total_object, COUNT(DISTINCT ip_address) as total_client FROM access GROUP BY CAST(time as DATE) ORDER BY time;"
     cursor.execute(query)
     result = cursor.fetchall()
-    return 0
+    total_baris = 0
+    waktu = []
+    total_request = []
+    total_object = []
+    total_client = []
+
+    for row in result:
+        waktu.append(row[0])
+        total_request.append(row[1])
+        total_object.append(row[2])
+        total_client.append(row[3])
+        total_baris = total_baris + 1
+
+    data = {
+                "total_baris":total_baris,
+                "waktu":waktu,
+                "total_request":total_request,
+                "total_object":total_object,
+                "total_client":total_client
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
 
 @app.route('/check_daily_request_by_month')
 def check_daily_request_by_month():
@@ -40,7 +61,30 @@ def check_daily_request_by_month():
     query = "SELECT CAST(time as DATE) as time, COUNT(request_line) as total_request, SUM(object_size) as total_object, COUNT(DISTINCT ip_address) as total_client FROM access WHERE time BETWEEN '" + range[0] + "' AND '" + range[1] + "' GROUP BY CAST(time as DATE) ORDER BY time;"
     cursor.execute(query)
     result = cursor.fetchall()
-    return 0
+    total_baris = 0
+    waktu = []
+    total_request = []
+    total_object = []
+    total_client = []
+
+    for row in result:
+        waktu.append(row[0])
+        total_request.append(row[1])
+        total_object.append(row[2])
+        total_client.append(row[3])
+        total_baris = total_baris + 1
+
+    data = {
+                "bulan":args['month'],
+                "tahun":args['year'],
+                "total_baris":total_baris,
+                "waktu":waktu,
+                "total_request":total_request,
+                "total_object":total_object,
+                "total_client":total_client
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
 
 @app.route('/check_request_on_day')
 def check_request_on_day():
@@ -52,8 +96,31 @@ def check_request_on_day():
     nextday = day + datetime.timedelta(days=1)
     day_str = day.strftime("%Y-%m-%d")
     nextday_str = nextday.strftime("%Y-%m-%d")
-    query = "SELECT ip_address, COUNT(request_line) as total_request, SUM(object_size) as total_object FROM access WHERE time BETWEEN ='" + day_str + "' AND '" + nextday_str + "' GROUP BY ip_address;"
-    return 0
+    query = "SELECT ip_address, COUNT(request_line) as total_request, SUM(object_size) as total_object FROM access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' GROUP BY ip_address;"
+    cursor.execute(query)
+    result = cursor.fetchall()
+    total_baris = 0
+    ip_address = []
+    total_request = []
+    total_object = []
+
+    for row in result:
+        ip_address.append(row[0])
+        total_request.append(row[1])
+        total_object.append(row[2])
+        total_baris = total_baris + 1
+    data = {
+                "hari": args['day'],
+                "bulan":args['month'],
+                "tahun":args['year'],
+                "total_baris":total_baris,
+                "ip_address":ip_address,
+                "total_request":total_request,
+                "total_object":total_object
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
+    
 
 @app.route('/get_request_line_and_status_code')
 def get_request_line_and_status_code():
@@ -65,17 +132,54 @@ def get_request_line_and_status_code():
     nextday = day + datetime.timedelta(days=1)
     day_str = day.strftime("%Y-%m-%d")
     nextday_str = nextday.strftime("%Y-%m-%d")
-    query = "SELECT request_line, status_code from access WHERE time BETWEEN ='" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
-    return 0
+    query = "SELECT request_line, status_code from access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
+    cursor.execute(query)
+    result = cursor.fetchall()
+    total_baris = 0
+    request_line = []
+    status_code = []
 
-@app.route('/seach_usage_of_keyword')
+    for row in result:
+        request_line.append(row[0])
+        status_code.append(row[1])
+        total_baris = total_baris + 1
+    data = {
+                "ip_address": args['ip_address'],
+                "hari": args['day'],
+                "bulan":args['month'],
+                "tahun":args['year'],
+                "total_baris":total_baris,
+                "request_line":request_line,
+                "status_code":status_code
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
+
+@app.route('/search_usage_of_keyword')
 def seach_usage_of_keyword():
     #masukan sebuah keyword, keluaran setiap ip address yg pernah request berisi keyword tsb dan jumlah requestnya
     if not checkArgs(['keyword']):
        return "error",422
     args = request.args
     query = "SELECT ip_address, COUNT(request_line) as total_request FROM access WHERE request_line LIKE '%" + args['keyword'] + "%' GROUP BY ip_address;"
-    return 0
+    cursor.execute(query)
+    result = cursor.fetchall()
+    total_baris = 0
+    ip_address = []
+    total_request = []
+
+    for row in result:
+        ip_address.append(row[0])
+        total_request.append(row[1])
+        total_baris = total_baris + 1
+    data = {
+                "keyword": args['keyword'],
+                "total_baris":total_baris,
+                "ip_address":ip_address,
+                "total_request":total_request
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
 
 @app.route('/search_usage_of_keyword_on_month')
 def seach_usage_of_keyword_on_month():
@@ -84,7 +188,27 @@ def seach_usage_of_keyword_on_month():
     args = request.args
     range = get_Month_Range(int(args['year']),int(args['month']))
     query = "SELECT ip_address, COUNT(request_line) as total_request FROM access WHERE time BETWEEN '" + range[0] + "' AND '" + range[1] + "' AND request_line LIKE '%" + args['keyword'] + "%' GROUP BY ip_address;"
-    return 0
+    cursor.execute(query)
+    result = cursor.fetchall()
+    total_baris = 0
+    ip_address = []
+    total_request = []
+
+    for row in result:
+        ip_address.append(row[0])
+        total_request.append(row[1])
+        total_baris = total_baris + 1
+    data = {
+                "keyword": args['keyword'],
+                "hari": args['day'],
+                "bulan":args['month'],
+                "tahun":args['year'],
+                "total_baris":total_baris,
+                "ip_address":ip_address,
+                "total_request":total_request
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
 
 @app.route('/check_status_code_occurence')
 def check_status_code_occurence():
