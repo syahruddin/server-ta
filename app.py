@@ -35,6 +35,7 @@ def check_daily_request_by_month():
     if not checkArgs(['year','month']):
        return "error",422
     
+    args = request.args
     range = get_Month_Range(int(args['year']), int(args['month']))
     query = "SELECT CAST(time as DATE) as time, COUNT(request_line) as total_request, SUM(object_size) as total_object, COUNT(DISTINCT ip_address) as total_client FROM access WHERE time BETWEEN '" + range[0] + "' AND '" + range[1] + "' GROUP BY CAST(time as DATE) ORDER BY time;"
     cursor.execute(query)
@@ -266,7 +267,6 @@ def get_Month_Range(year, month):
     end_str = end.strftime("%Y-%m-%d %H:%M:%S")
     temp = [start_str,end_str]
     return temp
-
 
 if __name__ == "__main__":
     app.run()
