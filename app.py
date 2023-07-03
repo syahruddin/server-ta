@@ -200,7 +200,6 @@ def seach_usage_of_keyword_on_month():
         total_baris = total_baris + 1
     data = {
                 "keyword": args['keyword'],
-                "hari": args['day'],
                 "bulan":args['month'],
                 "tahun":args['year'],
                 "total_baris":total_baris,
@@ -217,7 +216,24 @@ def check_status_code_occurence():
        return "error",422
     args = request.args
     query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE status_code = '" + args["keyword"] +"' GROUP BY CAST(time as DATE);"
-    return 0
+    cursor.execute(query)
+    result = cursor.fetchall()
+    total_baris = 0
+    waktu =[]
+    total_status = []
+
+    for row in result:
+        waktu.append(row[0])
+        total_status.append(row[1])
+        total_baris = total_baris + 1
+    data = {
+                "keyword": args['keyword'],
+                "total_baris":total_baris,
+                "waktu":waktu,
+                "total_status":total_status
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
 
 @app.route('/check_status_code_occurence_per_ip')
 def check_status_code_occurence_per_ip():
@@ -231,7 +247,27 @@ def check_status_code_occurence_per_ip():
     day_str = day.strftime("%Y-%m-%d")
     nextday_str = nextday.strftime("%Y-%m-%d")
     query = "SELECT ip_address, COUNT(status_code) AS total_status_code FROM access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND status_code ='" + args['keyword'] + "' GROUP BY ip_address;"
-    return 0
+    cursor.execute(query)
+    result = cursor.fetchall()
+    total_baris = 0
+    ip_address =[]
+    total_status = []
+
+    for row in result:
+        ip_address.append(row[0])
+        total_status.append(row[1])
+        total_baris = total_baris + 1
+    data = {
+                "keyword": args['keyword'],
+                "hari":args["day"],
+                "bulan":args["month"],
+                "tahun":args["year"],
+                "total_baris":total_baris,
+                "ip_address":ip_address,
+                "total_status":total_status
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
 
 #fungsi testing
 @app.route('/getobjectpermonth', methods=['GET'])
