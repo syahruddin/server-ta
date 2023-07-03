@@ -16,6 +16,7 @@ mydb = mysql.connect(
 cursor = mydb.cursor()
 
 app = Flask(__name__)
+
 @app.route('/')
 def hello_world():
     return "hello world"
@@ -24,7 +25,22 @@ def hello_world():
 def check_daily_request():
     #mengembalikan jumlah request, total object dikembalikan, dan jumlah ip address berbeda tiap harinya
     query = "SELECT CAST(time as DATE) as time, COUNT(request_line) as total_request, SUM(object_size) as total_object, COUNT(DISTINCT ip_address) as total_client FROM access GROUP BY CAST(time as DATE) ORDER BY time;"
+    cursor.execute(query)
+    result = cursor.fetchall()
     return 0
+
+@app.route('/check_daily_request_by_month')
+def check_daily_request_by_month():
+    #menerima bulan dan tahun, jika tanggal valid mengembalikan jumlah request, total object dikembalikan, dan jumlah ip address berbeda tiap harinya pada bulan tersebut
+    if not checkArgs(['year','month']):
+       return "error",422
+    
+    range = get_Month_Range(int(args['year']), int(args['month']))
+    query = "SELECT CAST(time as DATE) as time, COUNT(request_line) as total_request, SUM(object_size) as total_object, COUNT(DISTINCT ip_address) as total_client FROM access WHERE time BETWEEN '" + range[0] + "' AND '" + range[1] + "' GROUP BY CAST(time as DATE) ORDER BY time;"
+    cursor.execute(query)
+    result = cursor.fetchall()
+    return 0
+
 @app.route('/check_request_on_day')
 def check_request_on_day():
     #menerima hari, bulan, tahun. jika tanggal valid mengembalikan tiap ip address, jumlah requestnya, dan total object yg dikembalikannya pada hari tersebut.
@@ -37,6 +53,7 @@ def check_request_on_day():
     nextday_str = nextday.strftime("%Y-%m-%d")
     query = "SELECT ip_address, COUNT(request_line) as total_request, SUM(object_size) as total_object FROM access WHERE time BETWEEN ='" + day_str + "' AND '" + nextday_str + "' GROUP BY ip_address;"
     return 0
+
 @app.route('/get_request_line_and_status_code')
 def get_request_line_and_status_code():
     #masukan ip address, hari, bulan, tahun. jika tanggal dan ip address valid, mengembalikan tiap request line dan status codenya dari ip address tersebut pada tanggal tersebut.
@@ -49,6 +66,7 @@ def get_request_line_and_status_code():
     nextday_str = nextday.strftime("%Y-%m-%d")
     query = "SELECT request_line, status_code from access WHERE time BETWEEN ='" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
     return 0
+
 @app.route('/seach_usage_of_keyword')
 def seach_usage_of_keyword():
     #masukan sebuah keyword, keluaran setiap ip address yg pernah request berisi keyword tsb dan jumlah requestnya
@@ -57,6 +75,16 @@ def seach_usage_of_keyword():
     args = request.args
     query = "SELECT ip_address, COUNT(request_line) as total_request FROM access WHERE request_line LIKE '%" + args['keyword'] + "%' GROUP BY ip_address;"
     return 0
+
+@app.route('/search_usage_of_keyword_on_month')
+def seach_usage_of_keyword_on_month():
+    if not checkArgs(['keyword', 'month', 'year']):
+       return "error",422
+    args = request.args
+    range = get_Month_Range(int(args['year']),int(args['month']))
+    query = "SELECT ip_address, COUNT(request_line) as total_request FROM access WHERE time BETWEEN '" + range[0] + "' AND '" + range[1] + "' AND request_line LIKE '%" + args['keyword'] + "%' GROUP BY ip_address;"
+    return 0
+
 @app.route('/check_status_code_occurence')
 def check_status_code_occurence():
     #masukan keyword status code, keluaran jumlah kemunculan tiap harinya
@@ -65,6 +93,7 @@ def check_status_code_occurence():
     args = request.args
     query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE status_code = '" + args["keyword"] +"' GROUP BY CAST(time as DATE);"
     return 0
+
 @app.route('/check_status_code_occurence_per_ip')
 def check_status_code_occurence_per_ip():
     #masukan keyword, hari bulan dan tahun. jika tanggal valid, keluaran tiap ip address dengan status code tersebut dan jumlah kemunculannya
@@ -78,6 +107,8 @@ def check_status_code_occurence_per_ip():
     nextday_str = nextday.strftime("%Y-%m-%d")
     query = "SELECT ip_address, COUNT(status_code) AS total_status_code FROM access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND status_code ='" + args['keyword'] + "' GROUP BY ip_address;"
     return 0
+
+#fungsi testing
 @app.route('/getobjectpermonth', methods=['GET'])
 def get_object_permonth():
     if not checkArgs(['year']):
@@ -220,12 +251,22 @@ def test():
     data_json = json.dumps(data, default=str)
     return data_json
 
-
+#fungsi tambahan
 def checkArgs(arg):
     temp = True
     for ar in arg:
         temp = temp and (ar in request.args)
     return temp
+
+def get_Month_Range(year, month):
+    total_hari = monthrange(year, month)[1]
+    start = datetime.datetime(year,month,1)
+    end = datetime.datetime(year,month,total_hari) + datetime.timedelta(days=1)
+    start_str = start.strftime("%Y-%m-%d %H:%M:%S")
+    end_str = end.strftime("%Y-%m-%d %H:%M:%S")
+    temp = [start_str,end_str]
+    return temp
+
 
 if __name__ == "__main__":
     app.run()
