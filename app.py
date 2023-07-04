@@ -271,6 +271,21 @@ def check_status_code_occurence_per_ip():
     data_json = json.dumps(data, default=str)
     return data_json
 
+@app.route('/get_date_range')
+def get_date_range():
+    cursor.execute("SELECT CAST(time as DATE) FROM access ORDER BY time LIMIT 1;")
+    result = cursor.fetchone()
+    start = result[0]
+    cursor.execute("SELECT CAST(time as DATE) FROM access ORDER BY time DESC LIMIT 1;")
+    result = cursor.fetchone()
+    end = result[0]
+    data = {
+            "start": start,
+            "end": end
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
+
 #fungsi tambahan
 def checkArgs(arg):
     temp = True
