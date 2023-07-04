@@ -121,7 +121,6 @@ def check_request_on_day():
     data_json = json.dumps(data, default=str)
     return data_json
     
-
 @app.route('/get_request_line_and_status_code')
 def get_request_line_and_status_code():
     #masukan ip address, hari, bulan, tahun. jika tanggal dan ip address valid, mengembalikan tiap request line dan status codenya dari ip address tersebut pada tanggal tersebut.
@@ -132,16 +131,18 @@ def get_request_line_and_status_code():
     nextday = day + datetime.timedelta(days=1)
     day_str = day.strftime("%Y-%m-%d")
     nextday_str = nextday.strftime("%Y-%m-%d")
-    query = "SELECT request_line, status_code from access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
+    query = "SELECT time, request_line, status_code from access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
     cursor.execute(query)
     result = cursor.fetchall()
     total_baris = 0
+    waktu = []
     request_line = []
     status_code = []
 
     for row in result:
-        request_line.append(row[0])
-        status_code.append(row[1])
+        waktu.append(row[0])
+        request_line.append(row[1])
+        status_code.append(row[2])
         total_baris = total_baris + 1
     data = {
                 "ip_address": args['ip_address'],
@@ -149,6 +150,7 @@ def get_request_line_and_status_code():
                 "bulan":args['month'],
                 "tahun":args['year'],
                 "total_baris":total_baris,
+                "waktu":waktu,
                 "request_line":request_line,
                 "status_code":status_code
             }
@@ -182,7 +184,7 @@ def seach_usage_of_keyword():
     return data_json
 
 @app.route('/search_usage_of_keyword_on_month')
-def seach_usage_of_keyword_on_month():
+def search_usage_of_keyword_on_month():
     if not checkArgs(['keyword', 'month', 'year']):
        return "error",422
     args = request.args
