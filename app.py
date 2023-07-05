@@ -237,6 +237,35 @@ def check_status_code_occurence():
     data_json = json.dumps(data, default=str)
     return data_json
 
+@app.route('/check_status_code_occurence_on_month')
+def check_status_code_occurence_on_month():
+    #masukan keyword status code, keluaran jumlah kemunculan tiap harinya
+    if not checkArgs(['keyword', 'year', 'month']):
+       return "error",422
+    args = request.args
+    range = get_Month_Range(int(args['year']), int(args['month']))
+    query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE time BETWEEN '"+ range[0] + "' AND '" + range[1] + "' AND status_code = '" + args["keyword"] +"' GROUP BY CAST(time as DATE);"
+    cursor.execute(query)
+    result = cursor.fetchall()
+    total_baris = 0
+    waktu =[]
+    total_status = []
+
+    for row in result:
+        waktu.append(row[0])
+        total_status.append(row[1])
+        total_baris = total_baris + 1
+    data = {
+                "bulan":args['month'],
+                "tahun":args['year'],
+                "keyword": args['keyword'],
+                "total_baris":total_baris,
+                "waktu":waktu,
+                "total_status":total_status
+            }
+    data_json = json.dumps(data, default=str)
+    return data_json
+
 @app.route('/check_status_code_occurence_per_ip')
 def check_status_code_occurence_per_ip():
     #masukan keyword, hari bulan dan tahun. jika tanggal valid, keluaran tiap ip address dengan status code tersebut dan jumlah kemunculannya
@@ -304,4 +333,5 @@ def get_Month_Range(year, month):
 
 if __name__ == "__main__":
     app.run()
+    #host="0.0.0.0"
           
