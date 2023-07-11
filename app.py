@@ -224,7 +224,7 @@ def check_status_code_occurence():
     if not checkArgs(['keyword']):
        return "error",422
     args = request.args
-    query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE status_code = '" + args["keyword"] +"' GROUP BY CAST(time as DATE);"
+    query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE status_code like '" + args["keyword"] +"%%' GROUP BY CAST(time as DATE);"
     cursor.execute(query)
     result = cursor.fetchall()
     total_baris = 0
@@ -251,7 +251,7 @@ def check_status_code_occurence_on_month():
        return "error",422
     args = request.args
     range = get_Month_Range(int(args['year']), int(args['month']))
-    query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE time BETWEEN '"+ range[0] + "' AND '" + range[1] + "' AND status_code = '" + args["keyword"] +"' GROUP BY CAST(time as DATE);"
+    query = "SELECT CAST(time as DATE) as time, COUNT(status_code) as total_status_code FROM access WHERE time BETWEEN '"+ range[0] + "' AND '" + range[1] + "' AND status_code like '" + args["keyword"] +"%%' GROUP BY CAST(time as DATE);"
     cursor.execute(query)
     result = cursor.fetchall()
     total_baris = 0
@@ -284,7 +284,7 @@ def check_status_code_occurence_per_ip():
     nextday = day + datetime.timedelta(days=1)
     day_str = day.strftime("%Y-%m-%d")
     nextday_str = nextday.strftime("%Y-%m-%d")
-    query = "SELECT ip_address, COUNT(status_code) AS total_status_code FROM access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND status_code ='" + args['keyword'] + "' GROUP BY ip_address;"
+    query = "SELECT ip_address, COUNT(status_code) AS total_status_code FROM access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND status_code like'" + args['keyword'] + "%%' GROUP BY ip_address;"
     cursor.execute(query)
     result = cursor.fetchall()
     total_baris = 0
