@@ -124,14 +124,19 @@ def check_request_on_day():
 @app.route('/get_request_line_and_status_code')
 def get_request_line_and_status_code():
     #masukan ip address, hari, bulan, tahun. jika tanggal dan ip address valid, mengembalikan tiap request line dan status codenya dari ip address tersebut pada tanggal tersebut.
-    if not checkArgs(['day','year','month','ip_address']):
+    if not checkArgs(['ip_address']):
        return "error",422
     args = request.args
-    day = datetime.datetime(int(args['year']),int(args['month']),int(args['day']))
-    nextday = day + datetime.timedelta(days=1)
-    day_str = day.strftime("%Y-%m-%d")
-    nextday_str = nextday.strftime("%Y-%m-%d")
-    query = "SELECT time, request_line, status_code from access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
+    if checkArgs(['day','year','month']):
+        day = datetime.datetime(int(args['year']),int(args['month']),int(args['day']))
+        nextday = day + datetime.timedelta(days=1)
+        day_str = day.strftime("%Y-%m-%d")
+        nextday_str = nextday.strftime("%Y-%m-%d")
+        query = "SELECT time, request_line, status_code from access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
+        timeless = 0
+    else:
+        query = "SELECT time, request_line, status_code from access WHERE ip_address ='" + args['ip_address'] + "' ORDER BY time;"
+        timeless = 1
     cursor.execute(query)
     result = cursor.fetchall()
     total_baris = 0
@@ -146,14 +151,16 @@ def get_request_line_and_status_code():
         total_baris = total_baris + 1
     data = {
                 "ip_address": args['ip_address'],
-                "hari": args['day'],
-                "bulan":args['month'],
-                "tahun":args['year'],
+                "timeless":timeless,
                 "total_baris":total_baris,
                 "waktu":waktu,
                 "request_line":request_line,
                 "status_code":status_code
             }
+    if not timeless:
+        data["hari"] = args['day']
+        data["bulan"] = args['month']
+        data["tahun"] = args['year']
     data_json = json.dumps(data, default=str)
     return data_json
 
