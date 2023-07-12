@@ -127,15 +127,18 @@ def get_request_line_and_status_code():
     if not checkArgs(['ip_address']):
        return "error",422
     args = request.args
+    str_keyword =""
+    if checkArgs(['keyword']):
+        str_keyword = "' AND request_line like '%" + args['keyword'] + "%"
     if checkArgs(['day','year','month']):
         day = datetime.datetime(int(args['year']),int(args['month']),int(args['day']))
         nextday = day + datetime.timedelta(days=1)
         day_str = day.strftime("%Y-%m-%d")
         nextday_str = nextday.strftime("%Y-%m-%d")
-        query = "SELECT time, request_line, status_code from access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + "' ORDER BY time;"
+        query = "SELECT time, request_line, status_code from access WHERE time BETWEEN '" + day_str + "' AND '" + nextday_str + "' AND ip_address ='" + args['ip_address'] + str_keyword +"' ORDER BY time;"
         timeless = 0
     else:
-        query = "SELECT time, request_line, status_code from access WHERE ip_address ='" + args['ip_address'] + "' ORDER BY time;"
+        query = "SELECT time, request_line, status_code from access WHERE ip_address ='" + args['ip_address'] + str_keyword + "' ORDER BY time;"
         timeless = 1
     cursor.execute(query)
     result = cursor.fetchall()
@@ -161,6 +164,8 @@ def get_request_line_and_status_code():
         data["hari"] = args['day']
         data["bulan"] = args['month']
         data["tahun"] = args['year']
+    if checkArgs(["keyword"]):
+        data["keyword"] = args["keyword"]
     data_json = json.dumps(data, default=str)
     return data_json
 
